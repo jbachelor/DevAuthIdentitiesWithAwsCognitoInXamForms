@@ -38,9 +38,7 @@ namespace CoolApp.Services.Aws
             };
 
             tokenRequest.Logins = new Dictionary<string, string>
-            {
-                { DeveloperProviderName, coolAppSsoUser.GuidId.ToString() }
-            };
+                { { DeveloperProviderName, coolAppSsoUser.GuidId.ToString() } };
 
             tokenRequest.TokenDuration = (long)TimeSpan.FromDays(1).TotalSeconds; 
 
