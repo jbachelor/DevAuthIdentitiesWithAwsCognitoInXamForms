@@ -23,8 +23,6 @@ namespace CoolApp.Services.Aws
         public GetOpenIdTokenForDeveloperIdentityResponse CognitoIdentity { get; set; }
         public CognitoAWSCredentials Credentials { get; set; }
 
-        private string login = null;
-
         public AwsCognitoService()
         {
             ConfigureAws();
