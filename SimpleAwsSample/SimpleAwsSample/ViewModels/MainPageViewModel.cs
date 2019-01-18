@@ -56,7 +56,7 @@ namespace SimpleAwsSample.ViewModels
         private void OnLoginTapped()
         {
             CustomSsoUser ssoUser = _ssoService.LoginToCustomSso(Username, Password);
-            AddTextToStatusTextLabel($"Sso user id: {ssoUser.Id.ToString()}{Environment.NewLine}Sso user token: {ssoUser.Token}");
+            AddTextToStatusTextLabel($"#########{Environment.NewLine}User has authenticated with custom SSO:{Environment.NewLine}==> Sso user id: {ssoUser.Id.ToString()}{Environment.NewLine}==> Sso user token: {ssoUser.Token}");
         }
 
         private void AddTextToStatusTextLabel(string newMessage)

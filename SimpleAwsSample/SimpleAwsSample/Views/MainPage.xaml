@@ -20,7 +20,7 @@
             <Label x:Name="StatusTextLabel"
                    Text="{Binding StatusText}"
                    TextColor="Navy"
-                 OnStatusLabelrtyChanged="OnStatusLabelPropertyChanged" />
+                   PropertyChanged="OnStatusLabelPropertyChanged" />
         </ScrollView>
         <Button Text="Clear"
                 VerticalOptions="EndAndExpand"
