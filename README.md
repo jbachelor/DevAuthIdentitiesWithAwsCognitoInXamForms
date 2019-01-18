@@ -1,6 +1,9 @@
 # DevAuthIdentitiesWithAwsCognitoInXamForms
 A small code experiment... Grown into a sample app (using [Prism](https://prismlibrary.github.io/)... which I love dearly)... on establishing a user in an AWS Identity Pool using Developer Authenticated Identities (custom SSO login).
 
+## Special thanks!
+I'd like to profusely thank [kneekey23](https://github.com/kneekey23) and [steveataws](https://github.com/steveataws) for their help and advice as I struggled through learning how to implement this functionality. Thank you for your time, knowledge, effort, and assistance! I am in your debt!
+
 ## Purpose of this code
 Users of this app login to a company's custom SSO server (a total fake in this app, but BOY is it fast!), and the app receives a unique id (the *GuidId* property you see in the code of the *coolAppSsoUser* object) and session token (the *Token* property you see in the code of the *coolAppSsoUser* object) from the SSO server.
 
