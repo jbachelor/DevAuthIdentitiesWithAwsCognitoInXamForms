@@ -33,6 +33,7 @@ namespace SimpleAwsSample
             containerRegistry.RegisterForNavigation<MainPage, MainPageViewModel>();
 
             containerRegistry.RegisterSingleton<ICustomSsoService, CustomSsoService>();
+            containerRegistry.RegisterSingleton<IAwsCognitoService, AwsCognitoService>();
         }
     }
 }

@@ -13,6 +13,7 @@ namespace SimpleAwsSample.ViewModels
     public class MainPageViewModel : ViewModelBase
     {
         private readonly ICustomSsoService _ssoService;
+        private readonly IAwsCognitoService _awsCognitoService;
 
         public DelegateCommand LoginTappedCommand { get; set; }
         public DelegateCommand ClearTappedCommand { get; set; }
@@ -38,10 +39,11 @@ namespace SimpleAwsSample.ViewModels
             set { SetProperty(ref _statusText, value); }
         }
 
-        public MainPageViewModel(INavigationService navigationService, ICustomSsoService ssoService)
+        public MainPageViewModel(INavigationService navigationService, ICustomSsoService ssoService, IAwsCognitoService awsCognitoService)
             : base(navigationService)
         {
             _ssoService = ssoService;
+            _awsCognitoService = awsCognitoService;
             Title = "Simple Cognito";
 
             LoginTappedCommand = new DelegateCommand(OnLoginTapped);
@@ -53,10 +55,12 @@ namespace SimpleAwsSample.ViewModels
             StatusText = string.Empty;
         }
 
-        private void OnLoginTapped()
+        private async void OnLoginTapped()
         {
             CustomSsoUser ssoUser = _ssoService.LoginToCustomSso(Username, Password);
-            AddTextToStatusTextLabel($"#########{Environment.NewLine}User has authenticated with custom SSO:{Environment.NewLine}==> Sso user id: {ssoUser.Id.ToString()}{Environment.NewLine}==> Sso user token: {ssoUser.Token}");
+            AddTextToStatusTextLabel($"#########{Environment.NewLine}User has authenticated with custom SSO:{Environment.NewLine}==> Sso user id: {ssoUser.GuidId.ToString()}{Environment.NewLine}==> Sso user token: {ssoUser.Token}");
+            var cognitoIdentity = await _awsCognitoService.LoginToAwsWithDeveloperAuthenticatedSsoUserAsync(ssoUser);
+            AddTextToStatusTextLabel($"#########{Environment.NewLine}User now has an AWS Cognito identity with id: {cognitoIdentity.IdentityId}");
         }
 
         private void AddTextToStatusTextLabel(string newMessage)
