@@ -34,6 +34,7 @@ namespace SimpleAwsSample
 
             containerRegistry.RegisterSingleton<ICustomSsoService, CustomSsoService>();
             containerRegistry.RegisterSingleton<IAwsCognitoService, AwsCognitoService>();
+            containerRegistry.RegisterSingleton<IAwsLambdaService, AwsLambdaService>();
         }
     }
 }

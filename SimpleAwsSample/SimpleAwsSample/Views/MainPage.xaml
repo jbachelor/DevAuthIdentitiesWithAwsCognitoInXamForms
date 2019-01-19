@@ -22,6 +22,8 @@
                    TextColor="Navy"
                    PropertyChanged="OnStatusLabelPropertyChanged" />
         </ScrollView>
+        <Button Text="Make Output LOUD"
+                Command="{Binding ToUpperTappedCommand}" />
         <Button Text="Clear"
                 VerticalOptions="EndAndExpand"
                 Command="{Binding ClearTappedCommand}" />
