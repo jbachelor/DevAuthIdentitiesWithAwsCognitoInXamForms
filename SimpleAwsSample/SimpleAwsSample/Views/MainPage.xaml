@@ -19,13 +19,13 @@
         <ScrollView x:Name="StatusScrollView">
             <Label x:Name="StatusTextLabel"
                    Text="{Binding StatusText}"
-                   TextColor="Navy"
+                   TextColor="{Binding StatusTextColor}"
                    PropertyChanged="OnStatusLabelPropertyChanged" />
         </ScrollView>
         <Button Text="Make Output LOUD"
+                VerticalOptions="EndAndExpand"
                 Command="{Binding ToUpperTappedCommand}" />
         <Button Text="Clear"
-                VerticalOptions="EndAndExpand"
                 Command="{Binding ClearTappedCommand}" />
     </StackLayout>
 </ContentPage>
