@@ -25,7 +25,6 @@ namespace SimpleAwsSample.Services
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}");
             AddLoginToCredentials(AwsConstants.DeveloperProviderName, coolAppSsoUser.GuidId.ToString());
 
-            var cognitoIdentityClient = new AmazonCognitoIdentityClient(AwsConstants.AppDevAccessKey, AwsConstants.AppDevSecretKey, AwsConstants.AppRegionEndpoint);
 
             var tokenRequest = new GetOpenIdTokenForDeveloperIdentityRequest
             {
@@ -41,9 +40,12 @@ namespace SimpleAwsSample.Services
 
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}:  About to call GetOpenIdTokenForDeveloperIdentityAsync with {nameof(AwsConstants.DeveloperProviderName)}=[{AwsConstants.DeveloperProviderName}], SSO GuidId=[{coolAppSsoUser.GuidId}]");
 
-            GetOpenIdTokenForDeveloperIdentityResponse response =
-                await cognitoIdentityClient.GetOpenIdTokenForDeveloperIdentityAsync(tokenRequest);
-
+            GetOpenIdTokenForDeveloperIdentityResponse response;
+            using (var cognitoIdentityClient = new AmazonCognitoIdentityClient(AwsConstants.AppDevAccessKey, 
+                AwsConstants.AppDevSecretKey, AwsConstants.AppRegionEndpoint))
+            {
+                response = await cognitoIdentityClient.GetOpenIdTokenForDeveloperIdentityAsync(tokenRequest);
+            }
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}:  Done calling GetOpenIdTokenForDeveloperIdentityAsync. Got response with {nameof(response.IdentityId)}=[{response.IdentityId}], {nameof(response.Token)}={response.Token}");
 
             CognitoIdentity = response;
