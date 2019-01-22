@@ -16,11 +16,13 @@ namespace SimpleAwsSample.Services
 
         public AwsCognitoService()
         {
+            Debug.WriteLine($"**** {this.GetType().Name}:  ctor");
             ConfigureAws();
         }
 
         public async Task<GetOpenIdTokenForDeveloperIdentityResponse> LoginToAwsWithDeveloperAuthenticatedSsoUserAsync(CustomSsoUser coolAppSsoUser)
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}");
             AddLoginToCredentials(AwsConstants.DeveloperProviderName, coolAppSsoUser.GuidId.ToString());
 
             var cognitoIdentityClient = new AmazonCognitoIdentityClient(AwsConstants.AppDevAccessKey, AwsConstants.AppDevSecretKey, AwsConstants.AppRegionEndpoint);
@@ -50,11 +52,13 @@ namespace SimpleAwsSample.Services
 
         private void AddLoginToCredentials(string developerProviderName, string userId)
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(AddLoginToCredentials)}");
             Credentials.AddLogin(AwsConstants.DeveloperProviderName, userId);
         }
 
         private void ConfigureAws()
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(ConfigureAws)}");
             AWSConfigs.RegionEndpoint = AwsConstants.AppRegionEndpoint;
             AWSConfigs.CorrectForClockSkew = true;
             ConfigureLogging();
@@ -63,6 +67,7 @@ namespace SimpleAwsSample.Services
 
         private void ConfigureLogging()
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(ConfigureLogging)}");
             var loggingConfig = AWSConfigs.LoggingConfig;
             loggingConfig.LogMetrics = true;
             loggingConfig.LogResponses = ResponseLoggingOption.Always;
@@ -72,6 +77,7 @@ namespace SimpleAwsSample.Services
 
         private void InitializeAwsCognitoCredentialsProvider()
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(InitializeAwsCognitoCredentialsProvider)}");
             Credentials = new CognitoAWSCredentials(
                 AwsConstants.AwsAccountId, AwsConstants.AppIdentityPoolId, 
                 AwsConstants.UnAuthedRoleArn, AwsConstants.AuthedRoleArn, RegionEndpoint.USEast2);
