@@ -15,6 +15,8 @@ namespace SimpleAwsSample.ViewModels
 {
     public class MainPageViewModel : ViewModelBase
     {
+        #region Properties & fields
+
         private readonly ICustomSsoService _ssoService;
         private readonly IAwsCognitoService _awsCognitoService;
         private readonly IAwsLambdaService _awsLambdaService;
@@ -59,6 +61,8 @@ namespace SimpleAwsSample.ViewModels
             set { SetProperty(ref _statusText, value); }
         }
 
+        #endregion Properties & fields
+
         public MainPageViewModel(INavigationService navigationService, ICustomSsoService ssoService,
             IAwsCognitoService awsCognitoService, IAwsLambdaService awsLambdaService)
             : base(navigationService)
@@ -74,25 +78,23 @@ namespace SimpleAwsSample.ViewModels
             ToUpperTappedCommand = new DelegateCommand(OnToUpperTapped);
         }
 
-        private void OnClearTapped()
-        {
-            StatusText = string.Empty;
-        }
+        #region SSO and AWS Logic
 
         private async void OnLoginTapped()
         {
             ChooseNewStatusTextColor();
             CustomSsoUser ssoUser = _ssoService.LoginToCustomSso(Username, Password);
             AddTextToStatusTextLabel($"#########{System.Environment.NewLine}User has authenticated with custom SSO:{System.Environment.NewLine}==> Sso user id: {ssoUser.GuidId.ToString()}{System.Environment.NewLine}==> Sso user token: {ssoUser.Token}");
-            var cognitoIdentity = await _awsCognitoService.LoginToAwsWithDeveloperAuthenticatedSsoUserAsync(ssoUser);
-            AddTextToStatusTextLabel($"#########{System.Environment.NewLine}User now has an AWS Cognito identity with id: {cognitoIdentity.IdentityId}");
-        }
-
-        private void ChooseNewStatusTextColor()
-        {
-            var randomIndex = _random.Next(_textColorChoices.Count);
-            var chosenColor = _textColorChoices[randomIndex];
-            StatusTextColor = _textColorChoices[randomIndex];
+            _awsCognitoService.SsoUser = ssoUser;
+            try
+            {
+                var cognitoIdentity = await _awsCognitoService.LoginToAwsWithDeveloperAuthenticatedSsoUserAsync();
+                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}User now has an AWS Cognito identity with id: {cognitoIdentity.IdentityId}");
+            }
+            catch (Exception ex)
+            {
+                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}EXCEPTION:  {ex.Message}");
+            }
         }
 
         private async void OnToUpperTapped()
@@ -105,13 +107,38 @@ namespace SimpleAwsSample.ViewModels
                 Payload = StatusText
             };
 
-            var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.Credentials, AwsConstants.AppRegionEndpoint);
-            StatusText = awsResponse.Payload.ToString();
+            try
+            {
+                var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.Credentials, AwsConstants.AppRegionEndpoint);
+                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}Successfully called lambda! Result:  {awsResponse.Payload}");
+            }
+            catch (Exception ex)
+            {
+                AddTextToStatusTextLabel($"{System.Environment.NewLine}Call to lambda failed with exception:  {ex.Message}");
+            }
+        }
+
+        #endregion SSO and AWS Logic
+
+        #region Dinky methods that are relatively trivial
+
+        private void OnClearTapped()
+        {
+            StatusText = string.Empty;
+        }
+
+        private void ChooseNewStatusTextColor()
+        {
+            var randomIndex = _random.Next(_textColorChoices.Count);
+            var chosenColor = _textColorChoices[randomIndex];
+            StatusTextColor = _textColorChoices[randomIndex];
         }
 
         private void AddTextToStatusTextLabel(string newMessage)
         {
             StatusText += $"{newMessage}{System.Environment.NewLine}{System.Environment.NewLine}";
         }
+
+        #endregion Dinky methods that are relatively trivial
     }
 }

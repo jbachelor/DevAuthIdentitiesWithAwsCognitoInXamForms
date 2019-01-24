@@ -9,7 +9,8 @@ namespace SimpleAwsSample.Services
     {
         GetOpenIdTokenForDeveloperIdentityResponse CognitoIdentity { get; set; }
         CognitoAWSCredentials Credentials { get; set; }
+        CustomSsoUser SsoUser { get; set; }
 
-        Task<GetOpenIdTokenForDeveloperIdentityResponse> LoginToAwsWithDeveloperAuthenticatedSsoUserAsync(CustomSsoUser coolAppSsoUser);
+        Task<GetOpenIdTokenForDeveloperIdentityResponse> LoginToAwsWithDeveloperAuthenticatedSsoUserAsync();
     }
 }
