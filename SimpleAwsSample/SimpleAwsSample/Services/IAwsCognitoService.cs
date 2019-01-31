@@ -2,6 +2,7 @@
 using Amazon.CognitoIdentity;
 using Amazon.CognitoIdentity.Model;
 using SimpleAwsSample.Models;
+using static Amazon.CognitoIdentity.CognitoAWSCredentials;
 
 namespace SimpleAwsSample.Services
 {
@@ -10,7 +11,8 @@ namespace SimpleAwsSample.Services
         GetOpenIdTokenForDeveloperIdentityResponse CognitoIdentity { get; set; }
         CognitoAWSCredentials Credentials { get; set; }
         CustomSsoUser SsoUser { get; set; }
+        IdentityState UserIdentityState { get; set; }
 
-        Task<GetOpenIdTokenForDeveloperIdentityResponse> LoginToAwsWithDeveloperAuthenticatedSsoUserAsync();
+        Task<IdentityState> RefreshIdentityAsync();
     }
 }

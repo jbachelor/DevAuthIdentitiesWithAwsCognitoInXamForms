@@ -14,6 +14,7 @@ namespace SimpleAwsSample.Services
         public GetOpenIdTokenForDeveloperIdentityResponse CognitoIdentity { get; set; }
         public CognitoAWSCredentials Credentials { get; set; }
         public CustomSsoUser SsoUser { get; set; }
+        public IdentityState UserIdentityState { get; set; }
 
         public AwsCognitoService()
             : base(AwsConstants.AwsAccountId, AwsConstants.AppIdentityPoolId, AwsConstants.UnAuthedRoleArn,
@@ -23,11 +24,20 @@ namespace SimpleAwsSample.Services
             ConfigureAws();
         }
 
+        public override async Task<IdentityState> RefreshIdentityAsync()
+        {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(RefreshIdentityAsync)}");
+
+            var openIdToken = await LoginToAwsWithDeveloperAuthenticatedSsoUserAsync();
+            var identityState = new IdentityState(openIdToken.IdentityId, AwsConstants.DeveloperProviderName, openIdToken.Token, false);
+            UserIdentityState = identityState;
+            return identityState;
+        }
+
         public async Task<GetOpenIdTokenForDeveloperIdentityResponse> LoginToAwsWithDeveloperAuthenticatedSsoUserAsync()
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}");
             AddLoginToCredentials(AwsConstants.DeveloperProviderName, SsoUser.GuidId.ToString());
-
 
             var tokenRequest = new GetOpenIdTokenForDeveloperIdentityRequest
             {

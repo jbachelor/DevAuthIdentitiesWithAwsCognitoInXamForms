@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Xamarin.Forms;
+using static Amazon.CognitoIdentity.CognitoAWSCredentials;
 
 namespace SimpleAwsSample.ViewModels
 {
@@ -88,12 +89,13 @@ namespace SimpleAwsSample.ViewModels
             _awsCognitoService.SsoUser = ssoUser;
             try
             {
-                var cognitoIdentity = await _awsCognitoService.LoginToAwsWithDeveloperAuthenticatedSsoUserAsync();
-                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}User now has an AWS Cognito identity with id: {cognitoIdentity.IdentityId}");
+                IdentityState awsIdentityState = await _awsCognitoService.RefreshIdentityAsync();
+
+                AddTextToStatusTextLabel($"{System.Environment.NewLine}User now has an AWS Cognito identity: {System.Environment.NewLine}IdentityId={awsIdentityState.IdentityId}{System.Environment.NewLine}LoginProvider={awsIdentityState.LoginProvider}{System.Environment.NewLine}LoginSpecified={awsIdentityState.LoginSpecified}");
             }
             catch (Exception ex)
             {
-                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}EXCEPTION:  {ex.Message}");
+                AddTextToStatusTextLabel($"{System.Environment.NewLine}EXCEPTION:  {ex.Message}");
             }
         }
 
@@ -114,7 +116,7 @@ namespace SimpleAwsSample.ViewModels
             }
             catch (Exception ex)
             {
-                AddTextToStatusTextLabel($"{System.Environment.NewLine}Call to lambda failed with exception:  {ex.Message}");
+                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}Call to lambda failed with {ex.GetType().Name}:  {ex.Message}");
             }
         }
 
@@ -136,6 +138,7 @@ namespace SimpleAwsSample.ViewModels
 
         private void AddTextToStatusTextLabel(string newMessage)
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(AddTextToStatusTextLabel)}:  {newMessage}");
             StatusText += $"{newMessage}{System.Environment.NewLine}{System.Environment.NewLine}";
         }
 
