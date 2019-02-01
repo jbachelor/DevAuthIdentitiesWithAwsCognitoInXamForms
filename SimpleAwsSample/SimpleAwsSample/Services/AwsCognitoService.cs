@@ -14,9 +14,10 @@ namespace SimpleAwsSample.Services
     public class AwsCognitoService : CognitoAWSCredentials, IAwsCognitoService
     {
         private readonly IEventAggregator _eventAggregator;
+        string _userIdFromSsoSystem = string.Empty;
 
-        public CustomSsoUser SsoUser { get; set; }
-        public AWSCredentials AwsCredentials { get; set; }
+        public AWSCredentials AwsCredentials { get; private set; }
+
 
         /// <summary>
         /// For some reason, the base constructor throws a System.InvalidOperationException
@@ -46,11 +47,14 @@ namespace SimpleAwsSample.Services
             loggingConfig.LogTo = LoggingOptions.SystemDiagnostics;
         }
 
-        /// <summary>
-        /// This is the method to be called from a ViewModel in order to (1) GetOpenIdTokenForDeveloperIdentity, 
-        /// and (2) GetCredentialsForIdentity.
-        /// </summary>
-        /// <returns>The identity async.</returns>
+        public async Task LoginToAwsCognitoAndGetCredentialsAsync(string userIdFromSsoSystem)
+        {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsCognitoAndGetCredentialsAsync)}");
+
+            _userIdFromSsoSystem = userIdFromSsoSystem;
+            await RefreshIdentityAsync();
+        }
+
         public override async Task<IdentityState> RefreshIdentityAsync()
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(RefreshIdentityAsync)}");
@@ -79,6 +83,7 @@ namespace SimpleAwsSample.Services
             GetCredentialsForIdentityRequest credentialsRequest = new GetCredentialsForIdentityRequest
             {
                 Logins = new Dictionary<string, string> { { AwsConstants.AwsCognitoIdentityProviderKey, identityState.LoginToken } },
+                //Logins = this.CloneLogins, // this will cause an error.
                 IdentityId = identityState.IdentityId
             };
         
@@ -88,6 +93,7 @@ namespace SimpleAwsSample.Services
                 AwsConstants.AppDevSecretKey, AwsConstants.AppRegionEndpoint))
             {
                 credentialsResponse = await cognitoIdentityClient.GetCredentialsForIdentityAsync(credentialsRequest);
+                Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetCredentialsForIdentityFromAwsAsync)}: Successfully got aws credentials!");
             }
 
             return credentialsResponse;
@@ -97,13 +103,8 @@ namespace SimpleAwsSample.Services
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}");
 
-            if (SsoUser == null)
-            {
-                throw new ApplicationException("SsoUser property must be populated with a valid SSO user.");
-            }
-
             // Add sso user id ("GuidId") to CognitoAWSCredentials with key for our custom developer provider name:
-            AddLoginToCredentials(AwsConstants.DeveloperProviderName, SsoUser.GuidId.ToString());
+            AddLoginToCredentials(AwsConstants.DeveloperProviderName, _userIdFromSsoSystem);
 
             GetOpenIdTokenForDeveloperIdentityResponse response = await GetOpenIdTokenForDeveloperIdentityFromAwsAsync();
 
@@ -120,12 +121,12 @@ namespace SimpleAwsSample.Services
                 IdentityPoolId = AwsConstants.AppIdentityPoolId,
                 Logins = new Dictionary<string, string>
                 {
-                    {  AwsConstants.DeveloperProviderName, SsoUser.GuidId.ToString() }
+                    {  AwsConstants.DeveloperProviderName, _userIdFromSsoSystem }
                 },
                 TokenDuration = (long)TimeSpan.FromDays(1).TotalSeconds
             };
 
-            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetOpenIdTokenForDeveloperIdentityFromAwsAsync)}:  About to call GetOpenIdTokenForDeveloperIdentityAsync with {nameof(AwsConstants.DeveloperProviderName)}=[{AwsConstants.DeveloperProviderName}], SSO GuidId=[{SsoUser.GuidId}]");
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetOpenIdTokenForDeveloperIdentityFromAwsAsync)}:  About to call GetOpenIdTokenForDeveloperIdentityAsync with {nameof(AwsConstants.DeveloperProviderName)}=[{AwsConstants.DeveloperProviderName}], SSO GuidId=[{_userIdFromSsoSystem}]");
 
             GetOpenIdTokenForDeveloperIdentityResponse response;
             using (var cognitoIdentityClient = new AmazonCognitoIdentityClient(AwsConstants.AppDevAccessKey,
@@ -148,7 +149,7 @@ namespace SimpleAwsSample.Services
 
         private void PublishStatusUpdateFromCredentialsRequest(GetCredentialsForIdentityRequest credentialsRequest)
         {
-            string message = $"\nAbout to call GetCredentialsForIdentityAsync with {credentialsRequest.Logins.Count} logins:";
+            string message = $"About to call GetCredentialsForIdentityAsync with {credentialsRequest.Logins.Count} logins:";
             foreach (var login in credentialsRequest.Logins)
             {
                 message += $"\n\tkey: {login.Key}";
@@ -164,7 +165,8 @@ namespace SimpleAwsSample.Services
 
         public void Logout()
         {
-            SsoUser = null;
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(Logout)}");
+            _userIdFromSsoSystem = string.Empty;
             AwsCredentials = null;
         }
     }

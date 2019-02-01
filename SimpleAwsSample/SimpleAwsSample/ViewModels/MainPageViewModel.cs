@@ -7,6 +7,7 @@ using SimpleAwsSample.Services;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using static Amazon.CognitoIdentity.CognitoAWSCredentials;
 
@@ -46,6 +47,13 @@ namespace SimpleAwsSample.ViewModels
             set { SetProperty(ref _statusText, value); }
         }
 
+        private CustomSsoUser _loggedInSsoUser;
+        public CustomSsoUser LoggedInSsoUser
+        {
+            get { return _loggedInSsoUser; }
+            set { SetProperty(ref _loggedInSsoUser, value); }
+        }
+
         #endregion Properties & fields
 
         public MainPageViewModel(INavigationService navigationService, ICustomSsoService ssoService,
@@ -82,21 +90,26 @@ namespace SimpleAwsSample.ViewModels
         private void LoginToCustomSso(string userName, string password)
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToCustomSso)}");
-            CustomSsoUser ssoUser = _ssoService.LoginToCustomSso(userName, password);
-            AddTextToStatusTextLabel($"{System.Environment.NewLine}User has authenticated with custom SSO:{System.Environment.NewLine}==> Sso user id: {ssoUser.GuidId.ToString()}");
-            _awsCognitoService.SsoUser = ssoUser;
+            LoggedInSsoUser = _ssoService.LoginToCustomSso(userName, password);
+            AddTextToStatusTextLabel($"User has authenticated with custom SSO. Sso user id: {LoggedInSsoUser.GuidId.ToString()}");
         }
 
         private async Task LoginToAwsCognito()
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsCognito)}");
+            string message = string.Empty;
             try
             {
-                await _awsCognitoService.RefreshIdentityAsync();
+                await _awsCognitoService.LoginToAwsCognitoAndGetCredentialsAsync(LoggedInSsoUser.GuidId.ToString());
+                message = $"Successfully retrieved AWS credentials!";
             }
             catch (Exception ex)
             {
-                AddTextToStatusTextLabel($"{System.Environment.NewLine}EXCEPTION:  {ex.GetType().FullName}:  {ex.Message}");
+                message = $"EXCEPTION:  {ex.GetType().FullName}:  {ex.Message}";
+            }
+            finally
+            {
+                AddTextToStatusTextLabel(message);
             }
         }
 
@@ -110,23 +123,30 @@ namespace SimpleAwsSample.ViewModels
                 Payload = "true"
             };
 
-            AddTextToStatusTextLabel($"Calling aws ToUpper lambda with payload: {request.Payload}");
+            StringBuilder statusMessageBuilder = new StringBuilder($"Trying to call aws ToUpper lambda with payload: {request.Payload}{System.Environment.NewLine}");
 
             try
             {
                 var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.AwsCredentials, AwsConstants.AppRegionEndpoint);
                 var reader = new StreamReader(awsResponse.Payload);
                 string payload = reader.ReadToEnd();
-                AddTextToStatusTextLabel($"{System.Environment.NewLine}Successfully called lambda! Result:  {payload}");
+                statusMessageBuilder.AppendLine($"Successfully called lambda! Result:  {payload}");
             }
             catch (Exception ex)
             {
-                AddTextToStatusTextLabel($"{System.Environment.NewLine}Call to lambda failed with {ex.GetType().Name}:  {ex.Message}");
+                statusMessageBuilder.AppendLine($"Call to lambda failed with {ex.GetType().Name}:  {ex.Message}");
+            }
+            finally
+            {
+                Debug.WriteLine($"**** {this.GetType().Name}.{nameof(OnToUpperTappedExecuteAwsLambdaFunction)}:  {statusMessageBuilder.ToString()}");
+                AddTextToStatusTextLabel(statusMessageBuilder.ToString());
             }
         }
 
         private void OnLogoutTapped()
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(OnLogoutTapped)}");
+
             AddTextToStatusTextLabel($"Logging out... Bye!");
             _awsCognitoService.Logout();
         }
@@ -142,7 +162,7 @@ namespace SimpleAwsSample.ViewModels
 
         private void AddTextToStatusTextLabel(string newMessage)
         {
-            StatusText += $"{newMessage}{System.Environment.NewLine}{System.Environment.NewLine}";
+            StatusText += $"==============={System.Environment.NewLine}{newMessage}{System.Environment.NewLine}{System.Environment.NewLine}";
         }
 
         #endregion Dinky methods that are relatively trivial
