@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon;
 using Amazon.CognitoIdentity;
 using Amazon.CognitoIdentity.Model;
+using Amazon.Runtime;
 using Prism.Events;
 using SimpleAwsSample.Models;
 
@@ -15,6 +16,7 @@ namespace SimpleAwsSample.Services
         private readonly IEventAggregator _eventAggregator;
 
         public CustomSsoUser SsoUser { get; set; }
+        public AWSCredentials AwsCredentials { get; set; }
 
         /// <summary>
         /// For some reason, the base constructor throws a System.InvalidOperationException
@@ -46,14 +48,16 @@ namespace SimpleAwsSample.Services
 
             // (1) GetOpenIdTokenForDeveloperIdentity
             var openIdTokenForDeveloperIdentityResponse = await LoginToAwsWithDeveloperAuthenticatedSsoUserAsync();
+
             var identityState = new IdentityState(
                 openIdTokenForDeveloperIdentityResponse.IdentityId,
                 AwsConstants.DeveloperProviderName,
                 openIdTokenForDeveloperIdentityResponse.Token,
                 false);
 
-            // (2) GetCredentialsForIdentity ?? -- The line below leads to an InvalidParameterException:  Please provide a valid public provider.
-            var credentialsResponse = await GetCredentialsForIdentityFromAwsAsync(identityState);
+            // (2) GetCredentialsForIdentity
+            GetCredentialsForIdentityResponse credentialsResponse = await GetCredentialsForIdentityFromAwsAsync(identityState);
+            AwsCredentials = credentialsResponse.Credentials;
 
             // Return identityState
             return identityState;
@@ -66,7 +70,8 @@ namespace SimpleAwsSample.Services
             GetCredentialsForIdentityResponse credentialsResponse = null;
             GetCredentialsForIdentityRequest credentialsRequest = new GetCredentialsForIdentityRequest
             {
-                Logins = this.CloneLogins,
+                //Logins = this.CloneLogins, // leads to error
+                Logins = new Dictionary<string, string> { { AwsConstants.AwsCognitoIdentityProviderKey, identityState.LoginToken } },
                 IdentityId = identityState.IdentityId
             };
         

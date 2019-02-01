@@ -8,6 +8,7 @@ using SimpleAwsSample.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -127,14 +128,17 @@ namespace SimpleAwsSample.ViewModels
                 FunctionName = AwsConstants.LambdaToUpperFunctionArn,
                 InvocationType = "RequestResponse",
                 LogType = "Tail",
-                Payload = StatusText
+                Payload = "true"
             };
+
+            AddTextToStatusTextLabel($"Calling aws ToUpper lambda with payload: {request.Payload}");
 
             try
             {
-                var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.GetCognitoAwsCredentials(), AwsConstants.AppRegionEndpoint);
-                ClearAllStatusText();
-                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}Successfully called lambda! Result:  {awsResponse.Payload}");
+                var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.AwsCredentials, AwsConstants.AppRegionEndpoint);
+                var reader = new StreamReader(awsResponse.Payload);
+                string payload = reader.ReadToEnd();
+                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}Successfully called lambda! Result:  {payload}");
             }
             catch (Exception ex)
             {
