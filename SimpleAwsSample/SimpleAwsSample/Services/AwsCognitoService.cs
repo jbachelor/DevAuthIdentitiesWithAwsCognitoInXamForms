@@ -11,7 +11,6 @@ namespace SimpleAwsSample.Services
 {
     public class AwsCognitoService : CognitoAWSCredentials, IAwsCognitoService
     {
-        public GetOpenIdTokenForDeveloperIdentityResponse CognitoIdentity { get; set; }
         public CustomSsoUser SsoUser { get; set; }
         public IdentityState UserIdentityState { get; set; }
 
@@ -66,9 +65,8 @@ namespace SimpleAwsSample.Services
             }
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}:  Done calling GetOpenIdTokenForDeveloperIdentityAsync. Got response with {nameof(response.IdentityId)}=[{response.IdentityId}], {nameof(response.Token)}={response.Token}");
 
-            CognitoIdentity = response;
             AddLoginToCredentials(AwsConstants.AwsCognitoIdentityProviderKey, response.Token);
-            return CognitoIdentity;
+            return response;
         }
 
         private void AddLoginToCredentials(string providerName, string token)

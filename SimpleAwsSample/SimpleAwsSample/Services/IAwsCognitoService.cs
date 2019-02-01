@@ -8,7 +8,6 @@ namespace SimpleAwsSample.Services
 {
     public interface IAwsCognitoService
     {
-        GetOpenIdTokenForDeveloperIdentityResponse CognitoIdentity { get; set; }
         CustomSsoUser SsoUser { get; set; }
         IdentityState UserIdentityState { get; set; }
 
