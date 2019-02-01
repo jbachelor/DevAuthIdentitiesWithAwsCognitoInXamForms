@@ -111,7 +111,7 @@ namespace SimpleAwsSample.ViewModels
 
             try
             {
-                var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.Credentials, AwsConstants.AppRegionEndpoint);
+                var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.GetCognitoAwsCredentials(), AwsConstants.AppRegionEndpoint);
                 AddTextToStatusTextLabel($"#########{System.Environment.NewLine}Successfully called lambda! Result:  {awsResponse.Payload}");
             }
             catch (Exception ex)

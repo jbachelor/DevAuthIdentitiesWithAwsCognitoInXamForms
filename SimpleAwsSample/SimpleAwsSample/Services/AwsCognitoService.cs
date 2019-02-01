@@ -12,7 +12,6 @@ namespace SimpleAwsSample.Services
     public class AwsCognitoService : CognitoAWSCredentials, IAwsCognitoService
     {
         public GetOpenIdTokenForDeveloperIdentityResponse CognitoIdentity { get; set; }
-        public CognitoAWSCredentials Credentials { get; set; }
         public CustomSsoUser SsoUser { get; set; }
         public IdentityState UserIdentityState { get; set; }
 
@@ -20,8 +19,14 @@ namespace SimpleAwsSample.Services
             : base(AwsConstants.AwsAccountId, AwsConstants.AppIdentityPoolId, AwsConstants.UnAuthedRoleArn,
             AwsConstants.AuthedRoleArn, AwsConstants.AppRegionEndpoint)
         {
-            Debug.WriteLine($"**** {this.GetType().Name}:  ctor");
+            Debug.WriteLine($"**** {this.GetType().Name}:  ctor\n\tAccountId={this.AccountId}\n\tIdentityPoolId={this.IdentityPoolId}\n\tUnAuthRoleArn={this.UnAuthRoleArn}\n\tAuthRoleArn={this.AuthRoleArn}\n\t");
+
             ConfigureAws();
+        }
+
+        public CognitoAWSCredentials GetCognitoAwsCredentials()
+        {
+            return this;
         }
 
         public override async Task<IdentityState> RefreshIdentityAsync()
@@ -34,7 +39,7 @@ namespace SimpleAwsSample.Services
             return identityState;
         }
 
-        public async Task<GetOpenIdTokenForDeveloperIdentityResponse> LoginToAwsWithDeveloperAuthenticatedSsoUserAsync()
+        private async Task<GetOpenIdTokenForDeveloperIdentityResponse> LoginToAwsWithDeveloperAuthenticatedSsoUserAsync()
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}");
             AddLoginToCredentials(AwsConstants.DeveloperProviderName, SsoUser.GuidId.ToString());
@@ -62,13 +67,15 @@ namespace SimpleAwsSample.Services
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}:  Done calling GetOpenIdTokenForDeveloperIdentityAsync. Got response with {nameof(response.IdentityId)}=[{response.IdentityId}], {nameof(response.Token)}={response.Token}");
 
             CognitoIdentity = response;
+            AddLoginToCredentials(AwsConstants.AwsCognitoIdentityProviderKey, response.Token);
             return CognitoIdentity;
         }
 
-        private void AddLoginToCredentials(string developerProviderName, string userId)
+        private void AddLoginToCredentials(string providerName, string token)
         {
-            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(AddLoginToCredentials)}");
-            Credentials.AddLogin(AwsConstants.DeveloperProviderName, userId);
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(AddLoginToCredentials)}\n\t{providerName} : {token}");
+
+            this.AddLogin(providerName, token);
         }
 
         private void ConfigureAws()
@@ -77,7 +84,6 @@ namespace SimpleAwsSample.Services
             AWSConfigs.RegionEndpoint = AwsConstants.AppRegionEndpoint;
             AWSConfigs.CorrectForClockSkew = true;
             ConfigureLogging();
-            InitializeAwsCognitoCredentialsProvider();
         }
 
         private void ConfigureLogging()
@@ -88,14 +94,6 @@ namespace SimpleAwsSample.Services
             loggingConfig.LogResponses = ResponseLoggingOption.Always;
             loggingConfig.LogMetricsFormat = LogMetricsFormatOption.JSON;
             loggingConfig.LogTo = LoggingOptions.SystemDiagnostics;
-        }
-
-        private void InitializeAwsCognitoCredentialsProvider()
-        {
-            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(InitializeAwsCognitoCredentialsProvider)}");
-            Credentials = new CognitoAWSCredentials(
-                AwsConstants.AwsAccountId, AwsConstants.AppIdentityPoolId,
-                AwsConstants.UnAuthedRoleArn, AwsConstants.AuthedRoleArn, RegionEndpoint.USEast2);
         }
     }
 }
