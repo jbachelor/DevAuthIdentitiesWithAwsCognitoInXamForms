@@ -9,7 +9,6 @@ namespace SimpleAwsSample.Services
     public interface IAwsCognitoService
     {
         CustomSsoUser SsoUser { get; set; }
-        IdentityState UserIdentityState { get; set; }
 
         Task<IdentityState> RefreshIdentityAsync();
         CognitoAWSCredentials GetCognitoAwsCredentials();
