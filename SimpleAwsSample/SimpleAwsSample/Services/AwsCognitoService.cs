@@ -13,6 +13,10 @@ namespace SimpleAwsSample.Services
     {
         public CustomSsoUser SsoUser { get; set; }
 
+        /// <summary>
+        /// For some reason, the base constructor throws a System.InvalidOperationException
+        /// with the message, "The app.config/web.config files for the application did not contain region information".
+        /// </summary>
         public AwsCognitoService()
             : base(AwsConstants.AwsAccountId, AwsConstants.AppIdentityPoolId, AwsConstants.UnAuthedRoleArn,
             AwsConstants.AuthedRoleArn, AwsConstants.AppRegionEndpoint)
