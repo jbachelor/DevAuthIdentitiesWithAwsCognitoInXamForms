@@ -15,6 +15,7 @@ namespace SimpleAwsSample.Models
         public const string AuthedRoleArn = "";
         public const string AppDevAccessKey = "";
         public const string AppDevSecretKey = "";
+        public const string AwsCognitoIdentityProviderKey = "cognito-identity.amazonaws.com";
         public static RegionEndpoint AppRegionEndpoint = RegionEndpoint.USEast2;
     }
 }
