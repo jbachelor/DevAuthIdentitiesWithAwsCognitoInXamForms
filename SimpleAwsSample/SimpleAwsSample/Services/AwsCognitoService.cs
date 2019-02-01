@@ -152,9 +152,20 @@ namespace SimpleAwsSample.Services
             foreach (var login in credentialsRequest.Logins)
             {
                 message += $"\n\tkey: {login.Key}";
-                message += $"\n\tValue: {login.Value}";
+
+                string max20CharsValue = login.Value.Length > 20
+                    ? $"{login.Value.Substring(0, 20)}...(truncated)"
+                    : login.Value;
+
+                message += $"\n\tValue: {max20CharsValue}";
             }
             _eventAggregator.GetEvent<AddTextToUiOutput>().Publish(message);
+        }
+
+        public void Logout()
+        {
+            SsoUser = null;
+            AwsCredentials = null;
         }
     }
 }
