@@ -109,7 +109,7 @@ namespace SimpleAwsSample.ViewModels
             }
             catch (Exception ex)
             {
-                AddTextToStatusTextLabel($"{System.Environment.NewLine}EXCEPTION:  {ex.Message}");
+                AddTextToStatusTextLabel($"{System.Environment.NewLine}EXCEPTION:  {ex.GetType().FullName}:  {ex.Message}");
             }
         }
 
