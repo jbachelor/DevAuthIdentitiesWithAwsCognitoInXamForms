@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Xamarin.Forms;
 using static Amazon.CognitoIdentity.CognitoAWSCredentials;
 
@@ -75,8 +76,8 @@ namespace SimpleAwsSample.ViewModels
             Title = "Simple Cognito-Lambda";
 
             LoginTappedCommand = new DelegateCommand(OnLoginTapped);
-            ClearTappedCommand = new DelegateCommand(OnClearTapped);
-            ToUpperTappedCommand = new DelegateCommand(OnToUpperTapped);
+            ClearTappedCommand = new DelegateCommand(ClearAllStatusText);
+            ToUpperTappedCommand = new DelegateCommand(OnToUpperTappedExecuteAwsLambdaFunction);
         }
 
         #region SSO and AWS Logic
@@ -84,9 +85,22 @@ namespace SimpleAwsSample.ViewModels
         private async void OnLoginTapped()
         {
             ChooseNewStatusTextColor();
-            CustomSsoUser ssoUser = _ssoService.LoginToCustomSso(Username, Password);
+
+            var validSsoUser = LoginToCustomSso(Username, Password);
+            await LoginToAwsCognito();
+        }
+
+
+        private CustomSsoUser LoginToCustomSso(string userName, string password)
+        {
+            CustomSsoUser ssoUser = _ssoService.LoginToCustomSso(userName, password);
             AddTextToStatusTextLabel($"#########{System.Environment.NewLine}User has authenticated with custom SSO:{System.Environment.NewLine}==> Sso user id: {ssoUser.GuidId.ToString()}{System.Environment.NewLine}==> Sso user token: {ssoUser.Token}");
             _awsCognitoService.SsoUser = ssoUser;
+            return ssoUser;
+        }
+
+        private async Task LoginToAwsCognito()
+        {
             try
             {
                 IdentityState awsIdentityState = await _awsCognitoService.RefreshIdentityAsync();
@@ -99,7 +113,7 @@ namespace SimpleAwsSample.ViewModels
             }
         }
 
-        private async void OnToUpperTapped()
+        private async void OnToUpperTappedExecuteAwsLambdaFunction()
         {
             var request = new InvokeRequest
             {
@@ -112,6 +126,7 @@ namespace SimpleAwsSample.ViewModels
             try
             {
                 var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.GetCognitoAwsCredentials(), AwsConstants.AppRegionEndpoint);
+                ClearAllStatusText();
                 AddTextToStatusTextLabel($"#########{System.Environment.NewLine}Successfully called lambda! Result:  {awsResponse.Payload}");
             }
             catch (Exception ex)
@@ -124,7 +139,7 @@ namespace SimpleAwsSample.ViewModels
 
         #region Dinky methods that are relatively trivial
 
-        private void OnClearTapped()
+        private void ClearAllStatusText()
         {
             StatusText = string.Empty;
         }
