@@ -1,5 +1,6 @@
 ﻿using Amazon.Lambda.Model;
 using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
 using Prism.Navigation;
 using SimpleAwsSample.Models;
@@ -22,6 +23,11 @@ namespace SimpleAwsSample.ViewModels
         private readonly ICustomSsoService _ssoService;
         private readonly IAwsCognitoService _awsCognitoService;
         private readonly IAwsLambdaService _awsLambdaService;
+        private readonly IEventAggregator _eventAggregator;
+
+        public DelegateCommand LoginTappedCommand { get; set; }
+        public DelegateCommand ClearTappedCommand { get; set; }
+        public DelegateCommand ToUpperTappedCommand { get; set; }
 
         private Random _random = new Random();
         private List<Color> _textColorChoices = new List<Color>
@@ -31,9 +37,6 @@ namespace SimpleAwsSample.ViewModels
             Color.DarkCyan, Color.DarkGreen, Color.Green, Color.DarkRed, Color.Fuchsia, Color.Indigo
         };
 
-        public DelegateCommand LoginTappedCommand { get; set; }
-        public DelegateCommand ClearTappedCommand { get; set; }
-        public DelegateCommand ToUpperTappedCommand { get; set; }
 
         private Color _statusTextColor;
         public Color StatusTextColor
@@ -66,24 +69,30 @@ namespace SimpleAwsSample.ViewModels
         #endregion Properties & fields
 
         public MainPageViewModel(INavigationService navigationService, ICustomSsoService ssoService,
-            IAwsCognitoService awsCognitoService, IAwsLambdaService awsLambdaService)
+            IAwsCognitoService awsCognitoService, IAwsLambdaService awsLambdaService, IEventAggregator eventAggregator)
             : base(navigationService)
         {
             _ssoService = ssoService;
             _awsCognitoService = awsCognitoService;
             _awsLambdaService = awsLambdaService;
+            _eventAggregator = eventAggregator;
 
+            Username = "awesomeuser@fake.com";
+            Password = "1234";
             Title = "Simple Cognito-Lambda";
 
             LoginTappedCommand = new DelegateCommand(OnLoginTapped);
             ClearTappedCommand = new DelegateCommand(ClearAllStatusText);
             ToUpperTappedCommand = new DelegateCommand(OnToUpperTappedExecuteAwsLambdaFunction);
+
+            _eventAggregator.GetEvent<AddTextToUiOutput>().Subscribe(AddTextToStatusTextLabel);
         }
 
         #region SSO and AWS Logic
 
         private async void OnLoginTapped()
         {
+            ClearAllStatusText();
             ChooseNewStatusTextColor();
 
             var validSsoUser = LoginToCustomSso(Username, Password);
@@ -104,8 +113,6 @@ namespace SimpleAwsSample.ViewModels
             try
             {
                 IdentityState awsIdentityState = await _awsCognitoService.RefreshIdentityAsync();
-
-                AddTextToStatusTextLabel($"{System.Environment.NewLine}User now has an AWS Cognito identity: {System.Environment.NewLine}IdentityId={awsIdentityState.IdentityId}{System.Environment.NewLine}LoginProvider={awsIdentityState.LoginProvider}{System.Environment.NewLine}LoginSpecified={awsIdentityState.LoginSpecified}");
             }
             catch (Exception ex)
             {
