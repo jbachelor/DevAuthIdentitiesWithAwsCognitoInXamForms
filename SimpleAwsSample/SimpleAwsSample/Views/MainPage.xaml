@@ -25,7 +25,7 @@
         <Button Text="Call AWS Lambda"
                 VerticalOptions="EndAndExpand"
                 Command="{Binding ToUpperTappedCommand}" />
-        <Button Text="Clear"
-                Command="{Binding ClearTappedCommand}" />
+        <Button Text="Log Out"
+                Command="{Binding LogoutTappedCommand}" />
     </StackLayout>
 </ContentPage>

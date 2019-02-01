@@ -1,18 +1,13 @@
 ﻿using Amazon.Lambda.Model;
 using Prism.Commands;
 using Prism.Events;
-using Prism.Mvvm;
 using Prism.Navigation;
 using SimpleAwsSample.Models;
 using SimpleAwsSample.Services;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Xamarin.Forms;
 using static Amazon.CognitoIdentity.CognitoAWSCredentials;
 
 namespace SimpleAwsSample.ViewModels
@@ -27,7 +22,7 @@ namespace SimpleAwsSample.ViewModels
         private readonly IEventAggregator _eventAggregator;
 
         public DelegateCommand LoginTappedCommand { get; set; }
-        public DelegateCommand ClearTappedCommand { get; set; }
+        public DelegateCommand LogoutTappedCommand { get; set; }
         public DelegateCommand ToUpperTappedCommand { get; set; }
 
         private string _username;
@@ -67,8 +62,8 @@ namespace SimpleAwsSample.ViewModels
             Title = "Simple Cognito-Lambda";
 
             LoginTappedCommand = new DelegateCommand(OnLoginTapped);
-            ClearTappedCommand = new DelegateCommand(ClearAllStatusText);
             ToUpperTappedCommand = new DelegateCommand(OnToUpperTappedExecuteAwsLambdaFunction);
+            LogoutTappedCommand = new DelegateCommand(OnLogoutTapped);
 
             _eventAggregator.GetEvent<AddTextToUiOutput>().Subscribe(AddTextToStatusTextLabel);
         }
@@ -77,23 +72,25 @@ namespace SimpleAwsSample.ViewModels
 
         private async void OnLoginTapped()
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(OnLoginTapped)}");
             ClearAllStatusText();
 
             var validSsoUser = LoginToCustomSso(Username, Password);
             await LoginToAwsCognito();
         }
 
-
         private CustomSsoUser LoginToCustomSso(string userName, string password)
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToCustomSso)}");
             CustomSsoUser ssoUser = _ssoService.LoginToCustomSso(userName, password);
-            AddTextToStatusTextLabel($"#########{System.Environment.NewLine}User has authenticated with custom SSO:{System.Environment.NewLine}==> Sso user id: {ssoUser.GuidId.ToString()}{System.Environment.NewLine}==> Sso user token: {ssoUser.Token}");
+            AddTextToStatusTextLabel($"{System.Environment.NewLine}User has authenticated with custom SSO:{System.Environment.NewLine}==> Sso user id: {ssoUser.GuidId.ToString()}{System.Environment.NewLine}==> Sso user token: {ssoUser.Token}");
             _awsCognitoService.SsoUser = ssoUser;
             return ssoUser;
         }
 
         private async Task LoginToAwsCognito()
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsCognito)}");
             try
             {
                 IdentityState awsIdentityState = await _awsCognitoService.RefreshIdentityAsync();
@@ -121,12 +118,18 @@ namespace SimpleAwsSample.ViewModels
                 var awsResponse = await _awsLambdaService.InvokeAsync(request, _awsCognitoService.AwsCredentials, AwsConstants.AppRegionEndpoint);
                 var reader = new StreamReader(awsResponse.Payload);
                 string payload = reader.ReadToEnd();
-                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}Successfully called lambda! Result:  {payload}");
+                AddTextToStatusTextLabel($"{System.Environment.NewLine}Successfully called lambda! Result:  {payload}");
             }
             catch (Exception ex)
             {
-                AddTextToStatusTextLabel($"#########{System.Environment.NewLine}Call to lambda failed with {ex.GetType().Name}:  {ex.Message}");
+                AddTextToStatusTextLabel($"{System.Environment.NewLine}Call to lambda failed with {ex.GetType().Name}:  {ex.Message}");
             }
+        }
+
+        private void OnLogoutTapped()
+        {
+            AddTextToStatusTextLabel($"Logging out... Bye!");
+            _awsCognitoService.Logout();
         }
 
         #endregion SSO and AWS Logic
