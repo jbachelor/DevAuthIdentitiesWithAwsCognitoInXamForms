@@ -48,11 +48,31 @@ namespace SimpleAwsSample.Services
                 openIdTokenForDeveloperIdentityResponse.Token,
                 false);
 
-            // (2) GetCredentialsForIdentity ??
-            // ??????? not sure what to do here yet...
+            // (2) GetCredentialsForIdentity ?? -- Uncommenting the line below leads to an InvalidParameterException:  Please provide a valid public provider.
+            //var credentialsResponse = await GetCredentialsForIdentityFromAwsAsync(identityState);
 
             // Return identityState
             return identityState;
+        }
+
+        private async Task<GetCredentialsForIdentityResponse> GetCredentialsForIdentityFromAwsAsync(IdentityState identityState)
+        {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetCredentialsForIdentityFromAwsAsync)}");
+
+            GetCredentialsForIdentityResponse credentialsResponse = null;
+            GetCredentialsForIdentityRequest credentialsRequest = new GetCredentialsForIdentityRequest
+            {
+                Logins = this.CloneLogins,
+                IdentityId = identityState.IdentityId
+            };
+
+            using (var cognitoIdentityClient = new AmazonCognitoIdentityClient(AwsConstants.AppDevAccessKey,
+                AwsConstants.AppDevSecretKey, AwsConstants.AppRegionEndpoint))
+            {
+                credentialsResponse = await cognitoIdentityClient.GetCredentialsForIdentityAsync(credentialsRequest);
+            }
+
+            return credentialsResponse;
         }
 
         private async Task<GetOpenIdTokenForDeveloperIdentityResponse> LoginToAwsWithDeveloperAuthenticatedSsoUserAsync()
