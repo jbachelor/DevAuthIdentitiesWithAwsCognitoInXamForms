@@ -32,9 +32,18 @@ namespace SimpleAwsSample.Services
             ConfigureAws();
         }
 
-        public CognitoAWSCredentials GetCognitoAwsCredentials()
+        private void ConfigureAws()
         {
-            return this;
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(ConfigureAws)}");
+
+            AWSConfigs.RegionEndpoint = AwsConstants.AppRegionEndpoint;
+            AWSConfigs.CorrectForClockSkew = true;
+
+            var loggingConfig = AWSConfigs.LoggingConfig;
+            loggingConfig.LogMetrics = true;
+            loggingConfig.LogResponses = ResponseLoggingOption.Always;
+            loggingConfig.LogMetricsFormat = LogMetricsFormatOption.JSON;
+            loggingConfig.LogTo = LoggingOptions.SystemDiagnostics;
         }
 
         /// <summary>
@@ -59,7 +68,6 @@ namespace SimpleAwsSample.Services
             GetCredentialsForIdentityResponse credentialsResponse = await GetCredentialsForIdentityFromAwsAsync(identityState);
             AwsCredentials = credentialsResponse.Credentials;
 
-            // Return identityState
             return identityState;
         }
 
@@ -70,7 +78,6 @@ namespace SimpleAwsSample.Services
             GetCredentialsForIdentityResponse credentialsResponse = null;
             GetCredentialsForIdentityRequest credentialsRequest = new GetCredentialsForIdentityRequest
             {
-                //Logins = this.CloneLogins, // leads to error
                 Logins = new Dictionary<string, string> { { AwsConstants.AwsCognitoIdentityProviderKey, identityState.LoginToken } },
                 IdentityId = identityState.IdentityId
             };
@@ -148,20 +155,6 @@ namespace SimpleAwsSample.Services
                 message += $"\n\tValue: {login.Value}";
             }
             _eventAggregator.GetEvent<AddTextToUiOutput>().Publish(message);
-        }
-
-        private void ConfigureAws()
-        {
-            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(ConfigureAws)}");
-
-            AWSConfigs.RegionEndpoint = AwsConstants.AppRegionEndpoint;
-            AWSConfigs.CorrectForClockSkew = true;
-
-            var loggingConfig = AWSConfigs.LoggingConfig;
-            loggingConfig.LogMetrics = true;
-            loggingConfig.LogResponses = ResponseLoggingOption.Always;
-            loggingConfig.LogMetricsFormat = LogMetricsFormatOption.JSON;
-            loggingConfig.LogTo = LoggingOptions.SystemDiagnostics;
         }
     }
 }

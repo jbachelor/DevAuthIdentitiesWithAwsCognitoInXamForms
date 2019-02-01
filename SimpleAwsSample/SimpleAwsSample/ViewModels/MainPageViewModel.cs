@@ -30,22 +30,6 @@ namespace SimpleAwsSample.ViewModels
         public DelegateCommand ClearTappedCommand { get; set; }
         public DelegateCommand ToUpperTappedCommand { get; set; }
 
-        private Random _random = new Random();
-        private List<Color> _textColorChoices = new List<Color>
-        {
-            Color.Navy, Color.Aqua, Color.Red, Color.Blue, Color.Orange, Color.Aquamarine, Color.Azure,
-            Color.Black, Color.BlueViolet, Color.Brown, Color.Coral, Color.CornflowerBlue, Color.Crimson,
-            Color.DarkCyan, Color.DarkGreen, Color.Green, Color.DarkRed, Color.Fuchsia, Color.Indigo
-        };
-
-
-        private Color _statusTextColor;
-        public Color StatusTextColor
-        {
-            get { return _statusTextColor; }
-            set { SetProperty(ref _statusTextColor, value); }
-        }
-
         private string _username;
         public string Username
         {
@@ -94,7 +78,6 @@ namespace SimpleAwsSample.ViewModels
         private async void OnLoginTapped()
         {
             ClearAllStatusText();
-            ChooseNewStatusTextColor();
 
             var validSsoUser = LoginToCustomSso(Username, Password);
             await LoginToAwsCognito();
@@ -153,13 +136,6 @@ namespace SimpleAwsSample.ViewModels
         private void ClearAllStatusText()
         {
             StatusText = string.Empty;
-        }
-
-        private void ChooseNewStatusTextColor()
-        {
-            var randomIndex = _random.Next(_textColorChoices.Count);
-            var chosenColor = _textColorChoices[randomIndex];
-            StatusTextColor = _textColorChoices[randomIndex];
         }
 
         private void AddTextToStatusTextLabel(string newMessage)

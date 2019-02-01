@@ -19,10 +19,10 @@
         <ScrollView x:Name="StatusScrollView">
             <Label x:Name="StatusTextLabel"
                    Text="{Binding StatusText}"
-                   TextColor="{Binding StatusTextColor}"
+                   TextColor="Navy"
                    PropertyChanged="OnStatusLabelPropertyChanged" />
         </ScrollView>
-        <Button Text="Make Output LOUD"
+        <Button Text="Call AWS Lambda"
                 VerticalOptions="EndAndExpand"
                 Command="{Binding ToUpperTappedCommand}" />
         <Button Text="Clear"

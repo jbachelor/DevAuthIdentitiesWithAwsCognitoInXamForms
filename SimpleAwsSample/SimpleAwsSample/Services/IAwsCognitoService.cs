@@ -13,6 +13,5 @@ namespace SimpleAwsSample.Services
         AWSCredentials AwsCredentials { get; set; }
 
         Task<IdentityState> RefreshIdentityAsync();
-        CognitoAWSCredentials GetCognitoAwsCredentials();
     }
 }
