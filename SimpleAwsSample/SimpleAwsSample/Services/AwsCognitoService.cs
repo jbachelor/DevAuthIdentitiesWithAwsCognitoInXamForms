@@ -5,24 +5,28 @@ using System.Threading.Tasks;
 using Amazon;
 using Amazon.CognitoIdentity;
 using Amazon.CognitoIdentity.Model;
+using Prism.Events;
 using SimpleAwsSample.Models;
 
 namespace SimpleAwsSample.Services
 {
     public class AwsCognitoService : CognitoAWSCredentials, IAwsCognitoService
     {
+        private readonly IEventAggregator _eventAggregator;
+
         public CustomSsoUser SsoUser { get; set; }
 
         /// <summary>
         /// For some reason, the base constructor throws a System.InvalidOperationException
         /// with the message, "The app.config/web.config files for the application did not contain region information".
         /// </summary>
-        public AwsCognitoService()
+        public AwsCognitoService(IEventAggregator eventAggregator)
             : base(AwsConstants.AwsAccountId, AwsConstants.AppIdentityPoolId, AwsConstants.UnAuthedRoleArn,
             AwsConstants.AuthedRoleArn, AwsConstants.AppRegionEndpoint)
         {
             Debug.WriteLine($"**** {this.GetType().Name}:  ctor\n\tAccountId={this.AccountId}\n\tIdentityPoolId={this.IdentityPoolId}\n\tUnAuthRoleArn={this.UnAuthRoleArn}\n\tAuthRoleArn={this.AuthRoleArn}\n\t");
 
+            _eventAggregator = eventAggregator;
             ConfigureAws();
         }
 
@@ -48,8 +52,8 @@ namespace SimpleAwsSample.Services
                 openIdTokenForDeveloperIdentityResponse.Token,
                 false);
 
-            // (2) GetCredentialsForIdentity ?? -- Uncommenting the line below leads to an InvalidParameterException:  Please provide a valid public provider.
-            //var credentialsResponse = await GetCredentialsForIdentityFromAwsAsync(identityState);
+            // (2) GetCredentialsForIdentity ?? -- The line below leads to an InvalidParameterException:  Please provide a valid public provider.
+            var credentialsResponse = await GetCredentialsForIdentityFromAwsAsync(identityState);
 
             // Return identityState
             return identityState;
@@ -65,6 +69,8 @@ namespace SimpleAwsSample.Services
                 Logins = this.CloneLogins,
                 IdentityId = identityState.IdentityId
             };
+        
+            PublishStatusUpdateFromCredentialsRequest(credentialsRequest);
 
             using (var cognitoIdentityClient = new AmazonCognitoIdentityClient(AwsConstants.AppDevAccessKey,
                 AwsConstants.AppDevSecretKey, AwsConstants.AppRegionEndpoint))
@@ -87,7 +93,7 @@ namespace SimpleAwsSample.Services
             // Add sso user id ("GuidId") to CognitoAWSCredentials with key for our custom developer provider name:
             AddLoginToCredentials(AwsConstants.DeveloperProviderName, SsoUser.GuidId.ToString());
 
-            GetOpenIdTokenForDeveloperIdentityResponse response = await GetOpenIdTokenForDeveloperIdentity();
+            GetOpenIdTokenForDeveloperIdentityResponse response = await GetOpenIdTokenForDeveloperIdentityFromAwsAsync();
 
             // Add aws cognito token to CognitoAWSCredentials with prescribed key from aws:
             AddLoginToCredentials(AwsConstants.AwsCognitoIdentityProviderKey, response.Token);
@@ -95,7 +101,7 @@ namespace SimpleAwsSample.Services
             return response;
         }
 
-        private async Task<GetOpenIdTokenForDeveloperIdentityResponse> GetOpenIdTokenForDeveloperIdentity()
+        private async Task<GetOpenIdTokenForDeveloperIdentityResponse> GetOpenIdTokenForDeveloperIdentityFromAwsAsync()
         {
             var tokenRequest = new GetOpenIdTokenForDeveloperIdentityRequest
             {
@@ -107,7 +113,7 @@ namespace SimpleAwsSample.Services
                 TokenDuration = (long)TimeSpan.FromDays(1).TotalSeconds
             };
 
-            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetOpenIdTokenForDeveloperIdentity)}:  About to call GetOpenIdTokenForDeveloperIdentityAsync with {nameof(AwsConstants.DeveloperProviderName)}=[{AwsConstants.DeveloperProviderName}], SSO GuidId=[{SsoUser.GuidId}]");
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetOpenIdTokenForDeveloperIdentityFromAwsAsync)}:  About to call GetOpenIdTokenForDeveloperIdentityAsync with {nameof(AwsConstants.DeveloperProviderName)}=[{AwsConstants.DeveloperProviderName}], SSO GuidId=[{SsoUser.GuidId}]");
 
             GetOpenIdTokenForDeveloperIdentityResponse response;
             using (var cognitoIdentityClient = new AmazonCognitoIdentityClient(AwsConstants.AppDevAccessKey,
@@ -115,7 +121,9 @@ namespace SimpleAwsSample.Services
             {
                 response = await cognitoIdentityClient.GetOpenIdTokenForDeveloperIdentityAsync(tokenRequest);
             }
-            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetOpenIdTokenForDeveloperIdentity)}:  Done calling GetOpenIdTokenForDeveloperIdentityAsync. Got response with {nameof(response.IdentityId)}=[{response.IdentityId}], {nameof(response.Token)}={response.Token}");
+            string successMessage = $"Successful call to GetOpenIdTokenForDeveloperIdentityAsync. Got response with {nameof(response.IdentityId)}=[{response.IdentityId}]";
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetOpenIdTokenForDeveloperIdentityFromAwsAsync)}:  {successMessage}, {nameof(response.Token)}={response.Token}");
+            _eventAggregator.GetEvent<AddTextToUiOutput>().Publish(successMessage);
             return response;
         }
 
@@ -124,6 +132,17 @@ namespace SimpleAwsSample.Services
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(AddLoginToCredentials)}\n\t{providerName} : {token}");
 
             this.AddLogin(providerName, token);
+        }
+
+        private void PublishStatusUpdateFromCredentialsRequest(GetCredentialsForIdentityRequest credentialsRequest)
+        {
+            string message = $"\nAbout to call GetCredentialsForIdentityAsync with {credentialsRequest.Logins.Count} logins:";
+            foreach (var login in credentialsRequest.Logins)
+            {
+                message += $"\n\tkey: {login.Key}";
+                message += $"\n\tValue: {login.Value}";
+            }
+            _eventAggregator.GetEvent<AddTextToUiOutput>().Publish(message);
         }
 
         private void ConfigureAws()
