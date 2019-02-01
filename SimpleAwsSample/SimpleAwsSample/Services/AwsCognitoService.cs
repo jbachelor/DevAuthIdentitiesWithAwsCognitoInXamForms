@@ -27,10 +27,16 @@ namespace SimpleAwsSample.Services
             return this;
         }
 
+        /// <summary>
+        /// This is the method to be called from a ViewModel in order to (1) GetOpenIdTokenForDeveloperIdentity, 
+        /// and (2) GetCredentialsForIdentity.
+        /// </summary>
+        /// <returns>The identity async.</returns>
         public override async Task<IdentityState> RefreshIdentityAsync()
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(RefreshIdentityAsync)}");
 
+            // (1) GetOpenIdTokenForDeveloperIdentity
             var openIdTokenForDeveloperIdentityResponse = await LoginToAwsWithDeveloperAuthenticatedSsoUserAsync();
             var identityState = new IdentityState(
                 openIdTokenForDeveloperIdentityResponse.IdentityId,
@@ -38,6 +44,10 @@ namespace SimpleAwsSample.Services
                 openIdTokenForDeveloperIdentityResponse.Token,
                 false);
 
+            // (2) GetCredentialsForIdentity ??
+            // ??????? not sure what to do here yet...
+
+            // Return identityState
             return identityState;
         }
 
@@ -45,7 +55,7 @@ namespace SimpleAwsSample.Services
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}");
 
-            if(SsoUser == null || string.IsNullOrWhiteSpace(SsoUser.Token))
+            if (SsoUser == null || string.IsNullOrWhiteSpace(SsoUser.Token))
             {
                 throw new ApplicationException("SsoUser property must be populated with a valid SSO user.");
             }
