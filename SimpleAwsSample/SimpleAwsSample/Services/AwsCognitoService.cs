@@ -97,7 +97,7 @@ namespace SimpleAwsSample.Services
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}");
 
-            if (SsoUser == null || string.IsNullOrWhiteSpace(SsoUser.Token))
+            if (SsoUser == null)
             {
                 throw new ApplicationException("SsoUser property must be populated with a valid SSO user.");
             }

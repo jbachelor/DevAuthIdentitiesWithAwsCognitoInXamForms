@@ -75,17 +75,16 @@ namespace SimpleAwsSample.ViewModels
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(OnLoginTapped)}");
             ClearAllStatusText();
 
-            var validSsoUser = LoginToCustomSso(Username, Password);
+            LoginToCustomSso(Username, Password);
             await LoginToAwsCognito();
         }
 
-        private CustomSsoUser LoginToCustomSso(string userName, string password)
+        private void LoginToCustomSso(string userName, string password)
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToCustomSso)}");
             CustomSsoUser ssoUser = _ssoService.LoginToCustomSso(userName, password);
-            AddTextToStatusTextLabel($"{System.Environment.NewLine}User has authenticated with custom SSO:{System.Environment.NewLine}==> Sso user id: {ssoUser.GuidId.ToString()}{System.Environment.NewLine}==> Sso user token: {ssoUser.Token}");
+            AddTextToStatusTextLabel($"{System.Environment.NewLine}User has authenticated with custom SSO:{System.Environment.NewLine}==> Sso user id: {ssoUser.GuidId.ToString()}");
             _awsCognitoService.SsoUser = ssoUser;
-            return ssoUser;
         }
 
         private async Task LoginToAwsCognito()
@@ -93,7 +92,7 @@ namespace SimpleAwsSample.ViewModels
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsCognito)}");
             try
             {
-                IdentityState awsIdentityState = await _awsCognitoService.RefreshIdentityAsync();
+                await _awsCognitoService.RefreshIdentityAsync();
             }
             catch (Exception ex)
             {
@@ -143,7 +142,6 @@ namespace SimpleAwsSample.ViewModels
 
         private void AddTextToStatusTextLabel(string newMessage)
         {
-            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(AddTextToStatusTextLabel)}:  {newMessage}");
             StatusText += $"{newMessage}{System.Environment.NewLine}{System.Environment.NewLine}";
         }
 

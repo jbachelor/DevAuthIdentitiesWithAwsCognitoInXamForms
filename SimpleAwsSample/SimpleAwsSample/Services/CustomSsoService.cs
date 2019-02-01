@@ -10,7 +10,6 @@ namespace SimpleAwsSample.Services
             return new CustomSsoUser
             {
                 GuidId = Guid.NewGuid(),
-                Token = Guid.NewGuid().ToString()
             };
         }
     }
