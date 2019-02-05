@@ -1,4 +1,5 @@
-﻿using Amazon;
+﻿using System.Diagnostics;
+using Amazon;
 using Prism;
 using Prism.Ioc;
 using SimpleAwsSample.Models;
@@ -24,19 +25,30 @@ namespace SimpleAwsSample
 
         protected override async void OnInitialized()
         {
-            InitializeComponent();
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(OnInitialized)}");
 
+            InitializeComponent();
             await NavigationService.NavigateAsync("NavigationPage/MainPage");
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(RegisterTypes)}");
+
+            PreventExceptionInBaseConstructorOfCognitoAWSCredentials();
+
             containerRegistry.RegisterForNavigation<NavigationPage>();
             containerRegistry.RegisterForNavigation<MainPage, MainPageViewModel>();
 
             containerRegistry.RegisterSingleton<ICustomSsoService, CustomSsoService>();
             containerRegistry.RegisterSingleton<IAwsCognitoService, AwsCognitoService>();
             containerRegistry.RegisterSingleton<IAwsLambdaService, AwsLambdaService>();
+
+        }
+
+        private void PreventExceptionInBaseConstructorOfCognitoAWSCredentials()
+        {
+            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(PreventExceptionInBaseConstructorOfCognitoAWSCredentials)}");
 
             // Line below avoids an exception when base constructor for CognitoAWSCredentials is called:
             AWSConfigs.RegionEndpoint = AwsConstants.AppRegionEndpoint;
