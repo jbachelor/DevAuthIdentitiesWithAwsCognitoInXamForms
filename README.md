@@ -2,7 +2,7 @@
 A small code experiment... Grown into a sample app (using [Prism](https://prismlibrary.github.io/)... which I love dearly)... on establishing a user in an AWS Identity Pool using Developer Authenticated Identities (custom SSO login) in order to access other AWS services (e.g., AWS Lambda functions) with authenticated users.
 
 ## Special thanks!
-I'd like to profusely thank [kneekey23](https://github.com/kneekey23) and [steveataws](https://github.com/steveataws) for their help and advice as I struggled through learning how to implement this functionality. Thank you for your time, knowledge, effort, and assistance! I am in your debt!
+I'd like to profusely thank [kneekey23](https://github.com/kneekey23), [steveataws](https://github.com/steveataws), [nikhil-dabhade](https://github.com/nikhil-dabhade), and [sunchunqiang](https://github.com/sunchunqiang) for their help and advice as I struggled through learning how to implement this functionality. Thank you for your time, knowledge, effort, and assistance! I am in your debt!
 
 ## Purpose of this code
 Users of this app login to a company's custom SSO server (a total fake in this app, but BOY is it fast!), and the app receives a unique id (the *GuidId* property you see in the code of the *coolAppSsoUser* object). 
@@ -11,8 +11,8 @@ The idea is that the user would log in with the custom SSO provider, and behind 
 
 We then move on to getting credentials for our Cognito user, and from there the user is able to trigger a Lambda functions.
 
-## Concerns and To-Dos
-* The constructor for the AwsCognitoService throws a System.InvalidOperationException, with a message of, "The app.config/web.config files for the application did not contain region information", even though I provide the region in the constructor.
+## Notes to get this running on your machine
+There is a class called AwsConstants.cs... All of the required constants you will need are listed there, and I tried to make the names as clear as I could. You'll need to fill in values from your own account. 
 
 ## Where does this code come from?
 Following the steps outlined in the [AWS documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/authentication-flow.html), specifically under the heading **Developer Authenticated Identities Authflow**, then the sub-heading **Enhanced Authflow**. Please see the [Resources](https://github.com/jbachelor/DevAuthIdentitiesWithAwsCognitoInXamForms#resources) section below for more articles/videos that may be helpful in understanding this app and the problems it is trying to solve.
