@@ -18,10 +18,10 @@ namespace SimpleAwsSample.Services
 
         public AWSCredentials AwsCredentials { get; private set; }
 
-
         /// <summary>
-        /// For some reason, the base constructor throws a System.InvalidOperationException
-        /// with the message, "The app.config/web.config files for the application did not contain region information".
+        /// Note:  Base constructor of CognitoAWSCredentials will throw a non-fatal exception unless you set
+        /// the region endpoint BEFORE instantiation. This is why you will see the line of code in App.xaml.cs:
+        /// AWSConfigs.RegionEndpoint = AwsConstants.AppRegionEndpoint;
         /// </summary>
         public AwsCognitoService(IEventAggregator eventAggregator)
             : base(AwsConstants.AwsAccountId, AwsConstants.AppIdentityPoolId, AwsConstants.UnAuthedRoleArn,
@@ -83,7 +83,6 @@ namespace SimpleAwsSample.Services
             GetCredentialsForIdentityRequest credentialsRequest = new GetCredentialsForIdentityRequest
             {
                 Logins = new Dictionary<string, string> { { AwsConstants.AwsCognitoIdentityProviderKey, identityState.LoginToken } },
-                //Logins = this.CloneLogins, // this will cause an error.
                 IdentityId = identityState.IdentityId
             };
         
@@ -103,14 +102,7 @@ namespace SimpleAwsSample.Services
         {
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(LoginToAwsWithDeveloperAuthenticatedSsoUserAsync)}");
 
-            // Add sso user id ("GuidId") to CognitoAWSCredentials with key for our custom developer provider name:
-            AddLoginToCredentials(AwsConstants.DeveloperProviderName, _userIdFromSsoSystem);
-
             GetOpenIdTokenForDeveloperIdentityResponse response = await GetOpenIdTokenForDeveloperIdentityFromAwsAsync();
-
-            // Add aws cognito token to CognitoAWSCredentials with prescribed key from aws:
-            AddLoginToCredentials(AwsConstants.AwsCognitoIdentityProviderKey, response.Token);
-
             return response;
         }
 
@@ -138,13 +130,6 @@ namespace SimpleAwsSample.Services
             Debug.WriteLine($"**** {this.GetType().Name}.{nameof(GetOpenIdTokenForDeveloperIdentityFromAwsAsync)}:  {successMessage}, {nameof(response.Token)}={response.Token}");
             _eventAggregator.GetEvent<AddTextToUiOutput>().Publish(successMessage);
             return response;
-        }
-
-        private void AddLoginToCredentials(string providerName, string token)
-        {
-            Debug.WriteLine($"**** {this.GetType().Name}.{nameof(AddLoginToCredentials)}\n\t{providerName} : {token}");
-
-            this.AddLogin(providerName, token);
         }
 
         private void PublishStatusUpdateFromCredentialsRequest(GetCredentialsForIdentityRequest credentialsRequest)
