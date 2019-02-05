@@ -1,5 +1,7 @@
-﻿using Prism;
+﻿using Amazon;
+using Prism;
 using Prism.Ioc;
+using SimpleAwsSample.Models;
 using SimpleAwsSample.Services;
 using SimpleAwsSample.ViewModels;
 using SimpleAwsSample.Views;
@@ -35,6 +37,9 @@ namespace SimpleAwsSample
             containerRegistry.RegisterSingleton<ICustomSsoService, CustomSsoService>();
             containerRegistry.RegisterSingleton<IAwsCognitoService, AwsCognitoService>();
             containerRegistry.RegisterSingleton<IAwsLambdaService, AwsLambdaService>();
+
+            // Line below avoids an exception when base constructor for CognitoAWSCredentials is called:
+            AWSConfigs.RegionEndpoint = AwsConstants.AppRegionEndpoint;
         }
     }
 }
